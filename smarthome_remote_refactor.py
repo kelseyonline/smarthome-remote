@@ -1,10 +1,10 @@
-# Import 
+# Please see my README for short answer questions
 
+# === Import ===
 from abc import ABC, abstractmethod
 
 
 # === Abstract commands ===
-
 class Command(ABC): 
     @abstractmethod
     def execute(self): 
@@ -115,7 +115,6 @@ class History():
 
 
 # === Devices/Receivers === 
-
 class Light:
     def __init__(self) -> None:
         self.is_on = False
@@ -158,9 +157,6 @@ if __name__ == "__main__":
     remote = SmartHomeRemote(light, fan, player)
 
     history = History()
-
-    # Just for debugging
-    print(history.commands)
 
     # Turn the light on 
     light_on = LightOnCommand(light, history)
