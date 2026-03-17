@@ -18,11 +18,13 @@ class UndoableCommand(Command):
 
 # === Concrete commands === 
 class LightOnCommand(UndoableCommand):
-    def __init__(self, light):
+    def __init__(self, light, history):
         self.light = light
+        self.history = history
     
     def execute(self): 
         self.light.is_on = True 
+        self.history.push(self)
 
     def unexecute(self): 
         self.light.is_on = False 
@@ -40,52 +42,68 @@ class LightOffCommand(UndoableCommand):
 class SetFanSpeedCommand(UndoableCommand):
     def __init__(self, fan):
         self.fan = fan
-        self.speed = 0
+        self.prev_speed = fan.speed
     
     def execute(self, speed): 
+        self.prev_speed = self.fan.speed
         self.fan.speed = speed
 
-    def unexecute(): 
-         ...
+    def unexecute(self): 
+         self.fan.speed = self.prev_speed
 
 class PlaySongCommand(UndoableCommand):
     def __init__(self, player):
         self.player = player 
+        self.prev_song = None
+        self.prev_playing = False
     
     def execute(self, song): 
+        self.prev_song = self.player.current_song
+        self.prev_playing = self.player.playing
+
         self.player.playing = True
         self.player.current_song = song
 
-    def unexecute(): 
-        ...
+    def unexecute(self): 
+        self.player.current_song = self.prev_song
+        self.player.playing = self.prev_playing
 
 class StopSongCommand(UndoableCommand):
     def __init__(self, player):
         self.player = player 
+        self.prev_playing = player.playing
     
     def execute(self): 
+        self.prev_playing = self.player.playing
         self.player.playing = False
 
-    def unexecute(): 
-        ...
+    def unexecute(self): 
+        self.player.playing = self.prev_playing
 
+class UndoCommand(Command): 
+    def __init__(self, history):
+        self.history = history
+
+    def execute(self): 
+        if len(self.history) > 0: # Prevents crash on empty list
+            self.history.pop().unexecute()
 
 # === History === 
 class History(): 
     def __init__(self): 
         # This is our list of commands
-        self._commands: list[UndoableCommand] = []
+        self.commands: list[UndoableCommand] = []
 
      # Now build it out like a regular stack 
     def push(self, command):
-        self._commands.append(command)
+        self.commands.append(command)
 
     def pop(self):
-        return self._commands.pop()
+        return self.commands.pop()
     
     # This is important to prevent crashing when undoing 
     def __len__(self): 
-        return len(self._commands)
+        return len(self.commands)
 
 
 # === Devices/Receivers === 
@@ -124,6 +142,9 @@ class SmartHomeRemote:
         self.player = player
         self.history = []
 
+    def undo(self):
+        ...
+
     # def press(self, action: str, value=None) -> None:
     #     if action == "light_on":
     #         old_state = self.light.is_on
@@ -137,14 +158,28 @@ if __name__ == "__main__":
 
     remote = SmartHomeRemote(light, fan, player)
 
+    history = History()
+
+    # Just for debugging
+    print(history.commands)
+
     # Turn the light on 
-    light_on = LightOnCommand(light)
+    light_on = LightOnCommand(light, history)
     light_on.execute()
     print(light)
 
     # Turn the light off 
     light_off = LightOffCommand(light)
     light_off.execute() 
+    print(light)
+
+    # Now try turning the light on and then unexecuting
+    light_on = LightOnCommand(light, history)
+    light_on.execute()
+    print(light)
+
+    undo = UndoCommand(history)
+    undo.execute()
     print(light)
 
     # Set fan speed to 3

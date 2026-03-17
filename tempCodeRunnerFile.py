@@ -1,0 +1,1 @@
+ history.push(light_on)
