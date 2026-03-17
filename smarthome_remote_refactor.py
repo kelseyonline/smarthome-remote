@@ -14,21 +14,62 @@ class UndoableCommand(Command):
     def unexecute(self): 
         pass 
 
-# Concrete commands === 
+# === Concrete commands === 
 class LightOnCommand(UndoableCommand):
-    ...
+    def __init__(self, light):
+        self.light = light
+    
+    def execute(): 
+        self.light.is_on = True 
+
+    def unexecute(): 
+        self.light.is_on = False 
+
+    
 
 class LightOffCommand(UndoableCommand):
-    ...
+    def __init__(self, light):
+        self.light = light
+    
+    def execute(): 
+        self.light.is_on = False 
+
+    def unexecute(): 
+        self.light.is_on = True 
 
 class SetFanSpeedCommand(UndoableCommand):
-    ...
+    def __init__(self, fan):
+        self.fan = fan
+        self.speed = 0
+    
+    def execute(): 
+        self.fan.speed = speed
+
+    # def unexecute(): 
+    #     ...
 
 class PlaySongCommand(UndoableCommand):
-    ...
+    def __init__(self, player):
+        self.player = player 
+    
+    def execute(self, player): 
+        self.player.playing = False
+
+    # def unexecute(): 
+    #     ...
 
 class StopSongCommand(UndoableCommand):
-    ...
+    def __init__(self, player, song):
+        self.player = player 
+        self.song = ""
+    
+    def execute(self, player, song): 
+        self.player.playing = True 
+        self.song = song 
+
+    # def unexecute(): 
+    #     ...
+
 
 # === History === 
 class History(): 
@@ -95,12 +136,11 @@ class MusicPlayer:
 # === Invoker === 
 
 class SmartHomeRemote:
-
-    # def __init__(self, light: Light, fan: Fan, player: MusicPlayer) -> None:
-    #     self.light = light
-    #     self.fan = fan
-    #     self.player = player
-    #     self.history = []
+    def __init__(self, light: Light, fan: Fan, player: MusicPlayer) -> None:
+        self.light = light
+        self.fan = fan
+        self.player = player
+        self.history = []
 
     # def press(self, action: str, value=None) -> None:
     #     if action == "light_on":
@@ -168,17 +208,23 @@ if __name__ == "__main__":
 
     remote = SmartHomeRemote(light, fan, player)
 
-    remote.press("light_on")
-    remote.press("fan_speed", 3)
-    remote.press("play_song", "Take Five")
+    LightOnCommand(light)
 
     print(light)
-    print(fan)
-    print(player)
 
-    remote.undo()
-    remote.undo()
 
-    print(light)
-    print(fan)
-    print(player)
+
+    # remote.press("light_on")
+    # remote.press("fan_speed", 3)
+    # remote.press("play_song", "Take Five")
+
+    # print(light)
+    # print(fan)
+    # print(player)
+
+    # remote.undo()
+    # remote.undo()
+
+    # print(light)
+    # print(fan)
+    # print(player)
