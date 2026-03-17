@@ -30,36 +30,42 @@ class LightOnCommand(UndoableCommand):
         self.light.is_on = False 
 
 class LightOffCommand(UndoableCommand):
-    def __init__(self, light):
+    def __init__(self, light, history):
         self.light = light
+        self.history = history
     
     def execute(self): 
         self.light.is_on = False 
+        self.history.push(self)
 
     def unexecute(self): 
         self.light.is_on = True 
 
 class SetFanSpeedCommand(UndoableCommand):
-    def __init__(self, fan):
+    def __init__(self, fan, history):
         self.fan = fan
         self.prev_speed = fan.speed
+        self.history = history
     
     def execute(self, speed): 
         self.prev_speed = self.fan.speed
         self.fan.speed = speed
+        self.history.push(self)
 
     def unexecute(self): 
          self.fan.speed = self.prev_speed
 
 class PlaySongCommand(UndoableCommand):
-    def __init__(self, player):
+    def __init__(self, player, history):
         self.player = player 
         self.prev_song = None
         self.prev_playing = False
+        self.history = history
     
     def execute(self, song): 
         self.prev_song = self.player.current_song
         self.prev_playing = self.player.playing
+        self.history.push(self)
 
         self.player.playing = True
         self.player.current_song = song
@@ -69,13 +75,15 @@ class PlaySongCommand(UndoableCommand):
         self.player.playing = self.prev_playing
 
 class StopSongCommand(UndoableCommand):
-    def __init__(self, player):
+    def __init__(self, player, history):
         self.player = player 
         self.prev_playing = player.playing
+        self.history = history 
     
     def execute(self): 
         self.prev_playing = self.player.playing
         self.player.playing = False
+        self.history.push(self)
 
     def unexecute(self): 
         self.player.playing = self.prev_playing
@@ -142,15 +150,6 @@ class SmartHomeRemote:
         self.player = player
         self.history = []
 
-    def undo(self):
-        ...
-
-    # def press(self, action: str, value=None) -> None:
-    #     if action == "light_on":
-    #         old_state = self.light.is_on
-    #         self.light.turn_on()
-    #         self.history.append(("light", old_state))
-
 if __name__ == "__main__":
     light = Light()
     fan = Fan()
@@ -169,7 +168,7 @@ if __name__ == "__main__":
     print(light)
 
     # Turn the light off 
-    light_off = LightOffCommand(light)
+    light_off = LightOffCommand(light, history)
     light_off.execute() 
     print(light)
 
@@ -182,34 +181,73 @@ if __name__ == "__main__":
     undo.execute()
     print(light)
 
+    # Try turning the light off and unexecuting
+    light_off = LightOffCommand(light, history)
+    light_off.execute()
+    print(light)
+
+    undo = UndoCommand(history)
+    undo.execute()
+    print(light)
+
     # Set fan speed to 3
     print(fan)
-    set_fan_speed = SetFanSpeedCommand(fan)
+    set_fan_speed = SetFanSpeedCommand(fan, history)
     set_fan_speed.execute(3)
+    print(fan)
+
+    # Try unexecuting fan speed 
+    undo = UndoCommand(history)
+    undo.execute()
+    print(fan)
+
+    # Try changing fan speed twice, then unexecuting twice
+    set_fan_speed = SetFanSpeedCommand(fan, history)
+    set_fan_speed.execute(4)
+    print(fan)
+    set_fan_speed = SetFanSpeedCommand(fan, history)
+    set_fan_speed.execute(5)
+    print(fan)
+
+    undo = UndoCommand(history)
+    undo.execute()
+    print(fan)
+
+    undo = UndoCommand(history)
+    undo.execute()
     print(fan)
 
     # Play a song 
     print(player)
-    play_song = PlaySongCommand(player)
+    play_song = PlaySongCommand(player, history)
     play_song.execute("Never Gonna Give You Up")
     print(player)
 
     # Stop the song 
-    stop_song = StopSongCommand(player) 
+    stop_song = StopSongCommand(player, history) 
     stop_song.execute()
     print(player)
 
-    # remote.press("light_on")
-    # remote.press("fan_speed", 3)
-    # remote.press("play_song", "Take Five")
+    # Now play a song and unexecute 
+    play_song = PlaySongCommand(player, history)
+    play_song.execute("Is It A Crime")
+    print(player)
 
-    # print(light)
-    # print(fan)
-    # print(player)
+    undo = UndoCommand(history)
+    undo.execute()
+    print(player)
 
-    # remote.undo()
-    # remote.undo()
+    # Lastly, play a song, stop it, then unexecute
+    play_song = PlaySongCommand(player, history)
+    play_song.execute("My Name Is Jonas")
+    print(player)
 
-    # print(light)
-    # print(fan)
-    # print(player)
+    # Stop the song 
+    stop_song = StopSongCommand(player, history) 
+    stop_song.execute()
+    print(player)
+
+    undo = UndoCommand(history)
+    undo.execute()
+    print(player)
+
