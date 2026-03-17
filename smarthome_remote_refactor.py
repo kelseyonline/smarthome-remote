@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 
+
 # === Abstract commands ===
 
 class Command(ABC): 
@@ -14,27 +15,26 @@ class UndoableCommand(Command):
     def unexecute(self): 
         pass 
 
+
 # === Concrete commands === 
 class LightOnCommand(UndoableCommand):
     def __init__(self, light):
         self.light = light
     
-    def execute(): 
+    def execute(self): 
         self.light.is_on = True 
 
-    def unexecute(): 
+    def unexecute(self): 
         self.light.is_on = False 
-
-    
 
 class LightOffCommand(UndoableCommand):
     def __init__(self, light):
         self.light = light
     
-    def execute(): 
+    def execute(self): 
         self.light.is_on = False 
 
-    def unexecute(): 
+    def unexecute(self): 
         self.light.is_on = True 
 
 class SetFanSpeedCommand(UndoableCommand):
@@ -42,33 +42,32 @@ class SetFanSpeedCommand(UndoableCommand):
         self.fan = fan
         self.speed = 0
     
-    def execute(): 
+    def execute(self, speed): 
         self.fan.speed = speed
 
-    # def unexecute(): 
-    #     ...
+    def unexecute(): 
+         ...
 
 class PlaySongCommand(UndoableCommand):
     def __init__(self, player):
         self.player = player 
     
-    def execute(self, player): 
-        self.player.playing = False
+    def execute(self, song): 
+        self.player.playing = True
+        self.player.current_song = song
 
-    # def unexecute(): 
-    #     ...
+    def unexecute(): 
+        ...
 
 class StopSongCommand(UndoableCommand):
-    def __init__(self, player, song):
+    def __init__(self, player):
         self.player = player 
-        self.song = ""
     
-    def execute(self, player, song): 
-        self.player.playing = True 
-        self.song = song 
+    def execute(self): 
+        self.player.playing = False
 
-    # def unexecute(): 
-    #     ...
+    def unexecute(): 
+        ...
 
 
 # === History === 
@@ -88,43 +87,26 @@ class History():
     def __len__(self): 
         return len(self._commands)
 
+
 # === Devices/Receivers === 
 
 class Light:
     def __init__(self) -> None:
         self.is_on = False
 
-    def turn_on(self) -> None:
-        self.is_on = True
-
-    def turn_off(self) -> None:
-        self.is_on = False
-
     def __str__(self) -> str:
         return f"Light(is_on={self.is_on})"
-
 
 class Fan:
     def __init__(self) -> None:
         self.speed = 0
 
-    def set_speed(self, speed: int) -> None:
-        self.speed = speed
-
     def __str__(self) -> str:
         return f"Fan(speed={self.speed})"
-
 
 class MusicPlayer:
     def __init__(self) -> None:
         self.current_song = None
-        self.playing = False
-
-    def play(self, song: str) -> None:
-        self.current_song = song
-        self.playing = True
-
-    def stop(self) -> None:
         self.playing = False
 
     def __str__(self) -> str:
@@ -148,59 +130,6 @@ class SmartHomeRemote:
     #         self.light.turn_on()
     #         self.history.append(("light", old_state))
 
-    #     elif action == "light_off":
-    #         old_state = self.light.is_on
-    #         self.light.turn_off()
-    #         self.history.append(("light", old_state))
-
-    #     elif action == "fan_speed":
-    #         old_speed = self.fan.speed
-    #         self.fan.set_speed(value)
-    #         self.history.append(("fan", old_speed))
-
-    #     elif action == "play_song":
-    #         old_song = self.player.current_song
-    #         old_playing = self.player.playing
-    #         self.player.play(value)
-    #         self.history.append(("music_play", old_song, old_playing))
-
-    #     elif action == "stop_music":
-    #         old_song = self.player.current_song
-    #         old_playing = self.player.playing
-    #         self.player.stop()
-    #         self.history.append(("music_stop", old_song, old_playing))
-
-    #     else:
-    #         raise ValueError("Unknown action")
-
-    # def undo(self) -> None:
-    #     if not self.history:
-    #         return
-
-    #     last = self.history.pop()
-
-    #     if last[0] == "light":
-    #         if last[1]:
-    #             self.light.turn_on()
-    #         else:
-    #             self.light.turn_off()
-
-    #     elif last[0] == "fan":
-    #         self.fan.set_speed(last[1])
-
-    #     elif last[0] == "music_play":
-    #         old_song = last[1]
-    #         old_playing = last[2]
-    #         self.player.current_song = old_song
-    #         self.player.playing = old_playing
-
-    #     elif last[0] == "music_stop":
-    #         old_song = last[1]
-    #         old_playing = last[2]
-    #         self.player.current_song = old_song
-    #         self.player.playing = old_playing
-
-
 if __name__ == "__main__":
     light = Light()
     fan = Fan()
@@ -208,11 +137,32 @@ if __name__ == "__main__":
 
     remote = SmartHomeRemote(light, fan, player)
 
-    LightOnCommand(light)
-
+    # Turn the light on 
+    light_on = LightOnCommand(light)
+    light_on.execute()
     print(light)
 
+    # Turn the light off 
+    light_off = LightOffCommand(light)
+    light_off.execute() 
+    print(light)
 
+    # Set fan speed to 3
+    print(fan)
+    set_fan_speed = SetFanSpeedCommand(fan)
+    set_fan_speed.execute(3)
+    print(fan)
+
+    # Play a song 
+    print(player)
+    play_song = PlaySongCommand(player)
+    play_song.execute("Never Gonna Give You Up")
+    print(player)
+
+    # Stop the song 
+    stop_song = StopSongCommand(player) 
+    stop_song.execute()
+    print(player)
 
     # remote.press("light_on")
     # remote.press("fan_speed", 3)
